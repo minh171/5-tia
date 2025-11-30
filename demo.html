@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nhận tiền ảo</title>
+<style>
+  body{margin:0;font-family:sans-serif;background:#0b1020;color:#e6eef8;display:flex;justify-content:center;padding:12px;}
+  .app{width:100%;max-width:1200px;display:flex;flex-direction:column;gap:6px;}
+  .bar{height:50px;background:rgba(255,255,255,0.05);display:flex;align-items:center;padding:0 16px;justify-content:space-between;border-radius:6px;}
+  .money-area{flex:1;background:rgba(255,255,255,0.02);border-radius:6px;overflow:auto;padding:10px;display:flex;flex-wrap:wrap;gap:4px;transition:all .2s;}
+  .money-img{width:5vw;height:auto;border-radius:4px;}
+  .bundle-img{width:120px;height:auto;margin:6px;}
+  .controls{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn{padding:8px 14px;border:none;border-radius:6px;background:linear-gradient(90deg,#ffb86b,#ff6b6b);color:#111;cursor:pointer;}
+  .btn:active{transform:translateY(2px);}
+  .page{display:none;flex-direction:column;gap:8px;}
+  .page.active{display:flex;}
+  input[type=text]{padding:6px 8px;border-radius:4px;border:none;width:80%;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Thanh trên cùng -->
+  <div class="bar">
+    <div>Ngân hàng ảo</div>
+    <div id="statusLabel">Chưa nhận</div>
+  </div>
+
+  <!-- Trang 1: Nhận tiền -->
+  <div id="page1" class="page active" style="text-align:center;padding:24px;">
+    <h1>🎉 Chúc mừng!</h1>
+    <p>Bạn đã được chuyển <strong>5.000.000.000 VNĐ</strong> từ <em>ndm</em>.</p>
+    <p>Vui lòng nhận trước ngày <strong>1/12/2025</strong></p>
+    <button class="btn" id="acceptBtn">Nhận tiền</button>
+  </div>
+
+  <!-- Trang 2: Hiển thị tiền -->
+  <div id="page2" class="page">
+    <div class="money-area" id="moneyArea"></div>
+    <div class="controls">
+      <button class="btn" id="bundle100Btn">Buộc 100 tờ → 1 bó</button>
+      <button class="btn" id="bundle500Btn">5 bó → 1 cục</button>
+      <button class="btn" id="valiseBtn">Cất vào vali</button>
+    </div>
+    <div style="margin-top:6px;">Trang: <span id="pageNum">1</span>/100</div>
+    <div class="controls">
+      <button class="btn" id="prevPage">← Trước</button>
+      <button class="btn" id="nextPage">Sau →</button>
+    </div>
+  </div>
+
+  <!-- Trang 3: Ký nhận / Chúc mừng / Cảnh báo -->
+  <div id="page3" class="page" style="text-align:center;padding:40px;">
+    <div id="finalContent"></div>
+  </div>
+
+  <!-- Thanh dưới cùng -->
+  <div class="bar">
+    <div>Tổng tiền: <span id="totalLabel">5.000.000.000 VNĐ</span></div>
+  </div>
+</div>
+
+<script>
+const TOTAL_NOTES = 10000;
+const NOTES_PER_PAGE = 100;
+const moneyArea = document.getElementById('moneyArea');
+const statusLabel = document.getElementById('statusLabel');
+const pageNumLabel = document.getElementById('pageNum');
+let pages=[], currentPage=0;
+let smallBundlesCount=0,bigBundlesCount=0,valiseCount=0;
+
+// Hiển thị tờ lẻ phân trang
+function renderRawNotes(){
+  moneyArea.innerHTML=''; pages=[];
+  let totalPages = Math.ceil(TOTAL_NOTES/NOTES_PER_PAGE);
+  for(let i=0;i<totalPages;i++){
+    const pageDiv = document.createElement('div');
+    pageDiv.style.display = i===0?'flex':'none';
+    pageDiv.style.flexWrap='wrap'; pageDiv.style.gap='4px';
+    for(let j=0;j<NOTES_PER_PAGE;j++){
+      const img=document.createElement('img');
+      img.src='500kseed.jpg';
+      img.className='money-img';
+      pageDiv.appendChild(img);
+    }
+    pages.push(pageDiv); moneyArea.appendChild(pageDiv);
+  }
+  currentPage=0; pageNumLabel.innerText=`${currentPage+1}/${pages.length}`;
+}
+
+function showPage(idx){
+  pages.forEach((p,i)=>p.style.display=i===idx?'flex':'none');
+  currentPage=idx; pageNumLabel.innerText=`${currentPage+1}/${pages.length}`;
+}
+
+document.getElementById('nextPage').onclick = ()=>{if(currentPage<pages.length-1) showPage(currentPage+1);}
+document.getElementById('prevPage').onclick = ()=>{if(currentPage>0) showPage(currentPage-1);}
+
+// Nhận tiền
+document.getElementById('acceptBtn').onclick = ()=>{
+  document.getElementById('page1').classList.remove('active');
+  document.getElementById('page2').classList.add('active');
+  statusLabel.innerText='Hiển thị 10.000 tờ';
+  renderRawNotes();
+};
+
+// Gom tiền helper
+function askContinueOrSign(){
+  if(confirm("Bạn có muốn tiếp tục kiểm tiền không?")){
+    statusLabel.innerText='Đang kiểm tiền';
+  } else {
+    showSignPage();
+  }
+}
+
+// Buộc 100 tờ → 1 bó
+document.getElementById('bundle100Btn').onclick = ()=>{
+  smallBundlesCount = TOTAL_NOTES/100; // 100 bó
+  moneyArea.innerHTML='';
+  for(let i=0;i<smallBundlesCount;i++){
+    const img=document.createElement('img');
+    img.src='50trieuseed.jpg';
+    img.className='bundle-img';
+    moneyArea.appendChild(img);
+  }
+  statusLabel.innerText=`${smallBundlesCount} bó (50 triệu/bó)`;
+  askContinueOrSign();
+};
+
+// 5 bó → 1 cục
+document.getElementById('bundle500Btn').onclick = ()=>{
+  bigBundlesCount = smallBundlesCount/5; // 20 cục
+  moneyArea.innerHTML='';
+  for(let i=0;i<bigBundlesCount;i++){
+    const img=document.createElement('img');
+    img.src='250trieuseed.jpg';
+    img.className='bundle-img';
+    moneyArea.appendChild(img);
+  }
+  statusLabel.innerText=`${bigBundlesCount} cục (250 triệu/cục)`;
+  askContinueOrSign();
+};
+
+// Cất vào vali
+document.getElementById('valiseBtn').onclick = ()=>{
+  if(confirm("Bạn có muốn mang về không?")){
+    valiseCount=1;
+    moneyArea.innerHTML='';
+    const img=document.createElement('img');
+    img.src='valiseed.jpg';
+    img.className='bundle-img';
+    moneyArea.appendChild(img);
+    statusLabel.innerText=`${valiseCount} vali (5 tỷ VNĐ)`;
+  }
+  showSignPage();
+};
+
+// Hiển thị màn ký nhận
+function showSignPage(){
+  document.getElementById('page2').classList.remove('active');
+  document.getElementById('page3').classList.add('active');
+  const finalDiv = document.getElementById('finalContent');
+  finalDiv.innerHTML = `<p>Vui lòng ký nhận</p>
+    <input type="text" id="nameInput" placeholder="Họ và tên đầy đủ">
+    <br><button class="btn" id="signBtn">Ký nhận</button>`;
+  document.getElementById('signBtn').onclick = ()=>{
+    const val = document.getElementById('nameInput').value.trim();
+    finalDiv.innerHTML='';
+    if(val==='Trần Thảo Nguyên'){
+      finalDiv.innerHTML = `<h1>🎉 Chúc mừng!</h1><p>Bạn đã nhận 5 tỷ VNĐ</p>`;
+      statusLabel.innerText='Hoàn tất';
+    } else {
+      finalDiv.innerHTML = `<h1>❌ Sai!</h1><p>Bạn không phải người nhận Trần Thảo Nguyên</p>
+        <button class="btn" onclick="location.reload()">Quay về</button>`;
+      statusLabel.innerText='Sai người nhận';
+    }
+  };
+}
+</script>
+</body>
+</html>
